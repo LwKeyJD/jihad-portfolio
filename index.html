@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foyshal Hossain Jihad — Edit Bay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0E12;
+    --panel:#12181F;
+    --panel-2:#171F27;
+    --line:#2A333D;
+    --text:#E7EDF2;
+    --text-dim:#8B98A5;
+    --playback:#4FD8C4;
+    --render:#F2A93B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink); color:var(--text);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden; min-height:100vh;
+  }
+  ::selection{ background:var(--playback); color:var(--ink); }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+  a{ color:inherit; text-decoration:none; }
+
+  /* ---------- BOOT ---------- */
+  #boot{
+    position:fixed; inset:0; background:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100; flex-direction:column; gap:14px;
+  }
+  #boot .line{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--text-dim); opacity:0; letter-spacing:0.02em; }
+  #boot .line.playback{ color:var(--playback); }
+  #boot .cursor{ display:inline-block; width:8px; height:14px; background:var(--playback); margin-left:4px; animation:blink 0.9s steps(1) infinite; vertical-align:middle; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  @keyframes fadeIn{ to{ opacity:1; } }
+  #boot.hide{ animation:bootOut 0.6s ease forwards; }
+  @keyframes bootOut{ to{ opacity:0; visibility:hidden; } }
+
+  /* ---------- HEADER / NAV ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,14,18,0.92); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .scrub-top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px clamp(20px,5vw,56px); gap:20px; flex-wrap:wrap;
+  }
+  .brand .name{ font-size:16px; font-weight:600; letter-spacing:0.01em; }
+  .brand .role{ font-size:12px; color:var(--text-dim); font-family:'JetBrains Mono', monospace; }
+  nav{ display:flex; gap:6px; flex-wrap:wrap; }
+  nav a{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--text-dim);
+    padding:8px 12px; border-radius:4px; transition:color 0.2s ease, background 0.2s ease;
+  }
+  nav a:hover{ color:var(--text); background:var(--panel); }
+  nav a.active{ color:var(--playback); background:var(--panel-2); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .timecode{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--playback); letter-spacing:0.03em; }
+  .signin-btn{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    font-family:'JetBrains Mono', monospace; font-size:12px;
+    padding:8px 14px; border-radius:3px; cursor:pointer;
+    transition:border-color 0.2s ease, color 0.2s ease;
+  }
+  .signin-btn:hover{ border-color:var(--playback); color:var(--playback); }
+  .scrubber{
+    height:28px; position:relative; border-top:1px solid var(--line);
+    background:repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 40px);
+    background-position:20px 0;
+  }
+  .playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--render); left:18%; box-shadow:0 0 8px rgba(242,169,59,0.6); }
+
+  /* ---------- PAGES ---------- */
+  .page{ display:none; animation:fadeIn 0.35s ease; }
+  .page.active{ display:block; }
+
+  .hero{ padding:clamp(60px,10vw,110px) clamp(20px,5vw,56px) clamp(40px,6vw,70px); max-width:1100px; }
+  .hero .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); margin-bottom:18px; }
+  .hero h1{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:clamp(34px,6vw,64px); line-height:1.08; letter-spacing:-0.01em; max-width:15ch; }
+  .hero p{ margin-top:22px; font-size:16px; line-height:1.6; color:var(--text-dim); max-width:56ch; }
+  .credentials{ margin-top:28px; display:flex; flex-wrap:wrap; gap:10px; }
+  .pill{ font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--line); border-radius:20px; padding:7px 14px; color:var(--text-dim); }
+
+  .section-pad{ padding:0 clamp(20px,5vw,56px) 100px; max-width:1300px; }
+  .section-label{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); margin:50px 0 18px; }
+
+  .clip-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:18px; }
+  .clip-card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; overflow:hidden; cursor:pointer; transition:transform 0.18s ease, border-color 0.18s ease; }
+  .clip-card:hover{ transform:translateY(-3px); border-color:var(--playback); }
+  .clip-thumb{ aspect-ratio:16/9; position:relative; display:flex; align-items:center; justify-content:center; }
+  .clip-thumb::after{ content:''; position:absolute; inset:0; background:linear-gradient(0deg, rgba(10,14,18,0.55), transparent 55%); }
+  .play-icon{ width:38px; height:38px; border-radius:50%; background:rgba(10,14,18,0.55); border:1px solid rgba(231,237,242,0.4); display:flex; align-items:center; justify-content:center; z-index:1; }
+  .play-icon::after{ content:''; width:0; height:0; border-left:11px solid var(--text); border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px; }
+  .clip-meta{ padding:12px 14px; }
+  .clip-meta .ctitle{ font-size:13.5px; font-weight:500; margin-bottom:4px; }
+  .clip-meta .csoft{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-dim); }
+
+  .bin-head{ padding:clamp(40px,7vw,70px) clamp(20px,5vw,56px) 10px; max-width:1300px; }
+  .bin-head h2{ font-family:'Space Grotesk', sans-serif; font-size:clamp(28px,4vw,42px); font-weight:700; }
+  .bin-head p{ margin-top:10px; color:var(--text-dim); max-width:56ch; }
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; padding:26px clamp(20px,5vw,56px) 4px; max-width:1300px; }
+  .filter-chip{ font-family:'JetBrains Mono', monospace; font-size:11.5px; border:1px solid var(--line); border-radius:20px; padding:7px 13px; cursor:pointer; color:var(--text-dim); transition:border-color 0.2s, color 0.2s; }
+  .filter-chip.active{ border-color:var(--playback); color:var(--playback); }
+  .empty-note{ font-size:13px; color:var(--text-dim); text-align:center; padding:40px 0; grid-column:1/-1; }
+  .empty-note .mono{ color:var(--render); }
+
+  .about-wrap{ padding:clamp(60px,8vw,100px) clamp(20px,5vw,56px) 100px; max-width:1000px; display:grid; grid-template-columns:220px 1fr; gap:50px; }
+  .photo-box{ aspect-ratio:1; border:1px dashed var(--line); border-radius:8px; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--text-dim); font-size:12px; font-family:'JetBrains Mono', monospace; height:fit-content; }
+  .about-body h2{ font-family:'Space Grotesk', sans-serif; font-size:clamp(26px,4vw,38px); font-weight:700; margin-bottom:18px; }
+  .about-body p{ color:var(--text-dim); line-height:1.7; margin-bottom:16px; font-size:15px; }
+  .skills{ margin-top:28px; display:flex; flex-wrap:wrap; gap:8px; }
+  @media (max-width:640px){ .about-wrap{ grid-template-columns:1fr; } .photo-box{ max-width:180px; } }
+
+  .contact-wrap{ padding:clamp(60px,10vw,110px) clamp(20px,5vw,56px) 120px; max-width:700px; }
+  .contact-wrap h2{ font-family:'Space Grotesk', sans-serif; font-size:clamp(28px,4vw,42px); font-weight:700; margin-bottom:16px; }
+  .contact-wrap p{ color:var(--text-dim); line-height:1.6; margin-bottom:30px; max-width:52ch; }
+  .contact-row{ display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--line); }
+  .contact-row .label{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); }
+  .contact-row .value{ font-size:14px; }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(10,14,18,0.75); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modal-backdrop.show{ display:flex; }
+  .modal{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; width:min(360px,90vw); padding:28px; }
+  .modal h3{ font-family:'Space Grotesk', sans-serif; font-size:18px; margin-bottom:6px; }
+  .modal p{ font-size:12.5px; color:var(--text-dim); margin-bottom:20px; line-height:1.5; }
+  .modal input{ width:100%; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:10px 12px; color:var(--text); font-family:'JetBrains Mono', monospace; font-size:13px; margin-bottom:10px; }
+  .modal-actions{ display:flex; gap:10px; margin-top:16px; }
+  .modal-actions button{ flex:1; padding:10px; border-radius:4px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--line); }
+  .btn-primary{ background:var(--playback); color:var(--ink); border:none; font-weight:600; }
+  .btn-ghost{ background:transparent; color:var(--text-dim); }
+
+  footer{ border-top:1px solid var(--line); padding:26px clamp(20px,5vw,56px); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-dim); }
+</style>
+</head>
+<body>
+
+  <div id="boot">
+    <div class="line mono" id="l1">> initializing edit bay...</div>
+    <div class="line mono" id="l2">> loading reels · videos · motion graphics</div>
+    <div class="line mono playback" id="l3">> welcome<span class="cursor"></span></div>
+  </div>
+
+  <header>
+    <div class="scrub-top">
+      <div class="brand">
+        <div class="name display">Foyshal Hossain Jihad</div>
+        <div class="role">video editor — dhaka, bangladesh</div>
+      </div>
+      <nav id="mainNav">
+        <a href="javascript:void(0)" data-page="home">home</a>
+        <a href="javascript:void(0)" data-page="reels">reels</a>
+        <a href="javascript:void(0)" data-page="videos">videos</a>
+        <a href="javascript:void(0)" data-page="motion">motion graphics</a>
+        <a href="javascript:void(0)" data-page="about">about</a>
+        <a href="javascript:void(0)" data-page="contact">contact</a>
+      </nav>
+      <div class="header-right">
+        <div class="timecode" id="clock">00:00:00:00</div>
+        <button class="signin-btn" onclick="document.getElementById('modalBackdrop').classList.add('show')">Sign in</button>
+      </div>
+    </div>
+    <div class="scrubber"><div class="playhead"></div></div>
+  </header>
+
+  <main id="home" class="page">
+    <section class="hero">
+      <div class="eyebrow mono">reel loaded · press play to explore</div>
+      <h1>Cuts that hold attention, from first frame to last.</h1>
+      <p>I edit reels, long-form video, and motion graphics — trained through Digital Dropout's editing program and currently studying BS in CSE at United International University. This bay holds every project, sorted the way I sort my own timelines.</p>
+      <div class="credentials">
+        <span class="pill">Digital Dropout — Video Editing</span>
+        <span class="pill">United International University — BS CSE</span>
+        <span class="pill">Based in Bangladesh</span>
+      </div>
+    </section>
+    <div class="section-label mono">featured clips</div>
+    <div class="section-pad">
+      <div class="clip-grid" id="featuredGrid"></div>
+    </div>
+  </main>
+
+  <main id="reels" class="page">
+    <div class="bin-head">
+      <h2 class="display">Reels</h2>
+      <p>Short-form cuts built for retention — hooks, pacing, and sound design tuned for the first three seconds.</p>
+    </div>
+    <div class="filters" data-filter-for="reels"></div>
+    <div class="section-pad"><div class="clip-grid" id="grid-reels"></div></div>
+  </main>
+
+  <main id="videos" class="page">
+    <div class="bin-head">
+      <h2 class="display">Videos</h2>
+      <p>Long-form work — documentaries, wedding films, and brand videos where story structure carries the edit.</p>
+    </div>
+    <div class="filters" data-filter-for="videos"></div>
+    <div class="section-pad"><div class="clip-grid" id="grid-videos"></div></div>
+  </main>
+
+  <main id="motion" class="page">
+    <div class="bin-head">
+      <h2 class="display">Motion Graphics</h2>
+      <p>Titles, logo reveals, and animated graphics that give a video its finished, professional layer.</p>
+    </div>
+    <div class="filters" data-filter-for="motion"></div>
+    <div class="section-pad"><div class="clip-grid" id="grid-motion"></div></div>
+  </main>
+
+  <main id="about" class="page">
+    <div class="about-wrap">
+      <div class="photo-box">your photo goes here<br><span class="mono" style="color:var(--render); font-size:11px;">400x400 recommended</span></div>
+      <div class="about-body">
+        <h2>About Jihad</h2>
+        <p>I'm Foyshal Hossain Jihad, a video editor based in Bangladesh. I completed my video editing course through Digital Dropout, and I'm currently a student of BS in Computer Science and Engineering at United International University.</p>
+        <p>I work across short-form reels, long-form video, and motion graphics — moving between Premiere Pro, DaVinci Resolve, and After Effects depending on what a project needs. This site is where every project I finish gets a home.</p>
+        <div class="skills">
+          <span class="pill">Adobe Premiere Pro</span>
+          <span class="pill">DaVinci Resolve</span>
+          <span class="pill">After Effects</span>
+          <span class="pill">Color Grading</span>
+          <span class="pill">Sound Design</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <main id="contact" class="page">
+    <div class="contact-wrap">
+      <h2>Let's work together</h2>
+      <p>Reach out for editing work, collaborations, or just to talk shop. I'll add real links here once everything's connected.</p>
+      <div class="contact-row"><span class="label mono">email</span><span class="value">your-email@example.com</span></div>
+      <div class="contact-row"><span class="label mono">instagram</span><span class="value">@your-handle</span></div>
+      <div class="contact-row"><span class="label mono">location</span><span class="value">Dhaka, Bangladesh</span></div>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h3 class="display">Sign in</h3>
+      <p>Only Jihad can upload here. This panel is a visual mockup — real authentication gets wired up in the backend build.</p>
+      <input type="text" placeholder="username" disabled>
+      <input type="password" placeholder="password" disabled>
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="document.getElementById('modalBackdrop').classList.remove('show')">Close</button>
+        <button class="btn-primary" disabled>Sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>© 2026 Foyshal Hossain Jihad</div>
+    <div>prototype build — reels · videos · motion graphics</div>
+  </footer>
+
+<script>
+  ['l1','l2','l3'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.style.animation = 'fadeIn 0.4s ease forwards';
+    el.style.animationDelay = (i*0.45)+'s';
+  });
+  setTimeout(()=>{ document.getElementById('boot').classList.add('hide'); }, 1900);
+
+  let frame=0;
+  setInterval(()=>{
+    frame++;
+    const f = frame%24, s = Math.floor(frame/24)%60, m = Math.floor(frame/24/60)%60, h = Math.floor(frame/24/60/60);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('clock').textContent = pad(h)+':'+pad(m)+':'+pad(s)+':'+pad(f);
+  }, 1000/24);
+
+  const data = {
+    reels: [
+      {title:'Product Reel — Coffee Brand', soft:'Adobe Premiere Pro'},
+      {title:"Travel Reel — Cox's Bazar", soft:'DaVinci Resolve'},
+      {title:'Fashion Reel — Lookbook', soft:'Adobe Premiere Pro'},
+      {title:'Recipe Reel — Street Food', soft:'DaVinci Resolve'},
+    ],
+    videos: [
+      {title:'Wedding Highlight Film', soft:'DaVinci Resolve'},
+      {title:'Brand Documentary — 6min', soft:'Adobe Premiere Pro'},
+      {title:'Event Recap — Campus Fest', soft:'Adobe Premiere Pro'},
+    ],
+    motion: [
+      {title:'Logo Reveal Animation', soft:'After Effects'},
+      {title:'Lower-Third Title Pack', soft:'After Effects'},
+      {title:'Kinetic Typography Promo', soft:'After Effects'},
+    ]
+  };
+  const gradients = [
+    'linear-gradient(135deg,#1a2530,#0d3b36)',
+    'linear-gradient(135deg,#241a10,#3b2a0d)',
+    'linear-gradient(135deg,#1a1f30,#2a1a3b)',
+    'linear-gradient(135deg,#1a2b25,#0d3b2c)',
+  ];
+
+  function clipCard(c,i){
+    return '<div class="clip-card">'
+      + '<div class="clip-thumb" style="background:'+gradients[i%gradients.length]+'"><div class="play-icon"></div></div>'
+      + '<div class="clip-meta"><div class="ctitle">'+c.title+'</div><div class="csoft mono">Edited in '+c.soft+'</div></div>'
+      + '</div>';
+  }
+
+  function renderGrid(key){
+    const el = document.getElementById('grid-'+key);
+    if(!el) return;
+    const active = el.dataset.activeFilter || 'all';
+    const clips = data[key].filter(c => active==='all' || c.soft===active);
+    el.innerHTML = clips.length
+      ? clips.map(clipCard).join('')
+      : '<div class="empty-note">No clips tagged <span class="mono">'+active+'</span> yet.</div>';
+  }
+
+  function buildFilters(key){
+    const wrap = document.querySelector('[data-filter-for="'+key+'"]');
+    if(!wrap) return;
+    const softs = ['all', ...new Set(data[key].map(c=>c.soft))];
+    wrap.innerHTML = softs.map(s => '<div class="filter-chip'+(s==='all'?' active':'')+'" data-val="'+s+'">'+s+'</div>').join('');
+    wrap.querySelectorAll('.filter-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{
+        wrap.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        document.getElementById('grid-'+key).dataset.activeFilter = chip.dataset.val;
+        renderGrid(key);
+      });
+    });
+  }
+
+  ['reels','videos','motion'].forEach(key=>{ buildFilters(key); renderGrid(key); });
+
+  document.getElementById('featuredGrid').innerHTML =
+    [data.reels[0], data.videos[0], data.motion[0]].map(clipCard).join('');
+
+  const pages = ['home','reels','videos','motion','about','contact'];
+  function showPage(id){
+    if(!pages.includes(id)) id = 'home';
+    pages.forEach(p=>{
+      document.getElementById(p).classList.toggle('active', p===id);
+    });
+    document.querySelectorAll('#mainNav a').forEach(a=>{
+      a.classList.toggle('active', a.dataset.page===id);
+    });
+    try{ history.replaceState(null, '', '#'+id); }catch(e){}
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+  document.querySelectorAll('#mainNav a').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      showPage(a.dataset.page);
+    });
+  });
+  showPage('home');
+</script>
+</body>
+</html>
